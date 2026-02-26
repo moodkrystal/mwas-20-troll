@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TROLL Search Engine</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+}
+
+header {
+    text-align: center;
+    padding: 25px;
+    background: #1e293b;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.status-bar {
+    text-align: center;
+    padding: 8px;
+    font-size: 14px;
+    background: #111827;
+}
+
+.online { color: #22c55e; }
+.offline { color: #ef4444; }
+
+.search-container {
+    text-align: center;
+    margin-top: 60px;
+}
+
+input {
+    width: 60%;
+    padding: 15px;
+    font-size: 18px;
+    border-radius: 30px;
+    border: none;
+    outline: none;
+}
+
+button {
+    padding: 15px 25px;
+    border-radius: 30px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 10px;
+    background: #22c55e;
+    color: white;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #16a34a;
+}
+
+.results {
+    margin: 40px auto;
+    width: 70%;
+}
+
+.result-item {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    transition: 0.3s;
+}
+
+.result-item:hover {
+    background: #334155;
+}
+
+.result-item a {
+    color: #38bdf8;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+.description {
+    margin-top: 10px;
+    color: #cbd5e1;
+}
+
+.loading {
+    text-align: center;
+    margin-top: 20px;
+    display: none;
+}
+
+.error {
+    color: #ef4444;
+    text-align: center;
+    margin-top: 20px;
+    display: none;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    background: #1e293b;
+    margin-top: 50px;
+    font-size: 14px;
+}
+
+@media(max-width: 768px){
+    input { width: 80%; }
+    .results { width: 90%; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    TROLL 🔍 Search Engine
+</header>
+
+<div class="status-bar">
+    Backend Status: <span id="backendStatus">Checking...</span>
+</div>
+
+<div class="search-container">
+    <input type="text" id="searchInput" placeholder="Search the web with TROLL..." />
+    <button onclick="searchTroll()">Search</button>
+</div>
+
+<div class="loading" id="loading">Searching...</div>
+<div class="error" id="error"></div>
+
+<div class="results" id="results"></div>
+
+<footer>
+    © 2026 TROLL Search Engine | Powered by TROLL AI Core
+</footer>
+
+<script>
+/* ================================
+   AUTO BACKEND DETECTION
+================================ */
+
+const BACKEND_BASE =
+    window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : window.location.origin;
+
+const SEARCH_API = BACKEND_BASE + "/api/search";
+const STATUS_API = BACKEND_BASE + "/api/status";
+
+let isSearching = false;
+
+/* ================================
+   BACKEND STATUS CHECK
+================================ */
+
+async function checkBackend() {
+    const statusEl = document.getElementById("backendStatus");
+    try {
+        const res = await fetch(STATUS_API);
+        if (res.ok) {
+            statusEl.textContent = "Online";
+            statusEl.className = "online";
+        } else {
+            throw new Error();
+        }
+    } catch {
+        statusEl.textContent = "Offline";
+        statusEl.className = "offline";
+    }
+}
+
+window.onload = checkBackend;
+
+/* ================================
+   SEARCH FUNCTION
+================================ */
+
+async function searchTroll() {
+
+    if (isSearching) return;
+
+    const query = document.getElementById("searchInput").value.trim();
+    const resultsDiv = document.getElementById("results");
+    const loading = document.getElementById("loading");
+    const errorDiv = document.getElementById("error");
+
+    resultsDiv.innerHTML = "";
+    errorDiv.style.display = "none";
+
+    if (!query) {
+        errorDiv.innerText = "Please enter a search query.";
+        errorDiv.style.display = "block";
+        return;
+    }
+
+    isSearching = true;
+    loading.style.display = "block";
+
+    try {
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const response = await fetch(SEARCH_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query }),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+
+        if (!response.ok) throw new Error("Server error");
+
+        const data = await response.json();
+
+        loading.style.display = "none";
+
+        /* AI Answer Box */
+        if (data.aiAnswer) {
+            const aiBox = document.createElement("div");
+            aiBox.className = "result-item";
+            aiBox.style.border = "2px solid #22c55e";
+            aiBox.innerHTML = `
+                <strong>🤖 TROLL AI Overview</strong>
+                <div class="description">${data.aiAnswer}</div>
+            `;
+            resultsDiv.appendChild(aiBox);
+        }
+
+        /* Normal Results */
+        if (!data.results || data.results.length === 0) {
+            resultsDiv.innerHTML += "<p>No results found.</p>";
+        } else {
+            data.results.forEach(r => {
+                const item = document.createElement("div");
+                item.className = "result-item";
+                item.innerHTML = `
+                    <a href="${r.url}" target="_blank">${r.title}</a>
+                    <div class="description">${r.description}</div>
+                `;
+                resultsDiv.appendChild(item);
+            });
+        }
+
+    } catch (error) {
+
+        loading.style.display = "none";
+
+        if (error.name === "AbortError") {
+            errorDiv.innerText = "Request timed out. Try again.";
+        } else {
+            errorDiv.innerText = "Unable to connect to TROLL backend.";
+        }
+
+        errorDiv.style.display = "block";
+    }
+
+    isSearching = false;
+}
+
+/* ENTER KEY SUPPORT */
+document.getElementById("searchInput")
+.addEventListener("keyup", e => {
+    if (e.key === "Enter") searchTroll();
+});
+</script>
+
+</body>
+</html>
