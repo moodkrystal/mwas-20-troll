@@ -1,0 +1,136 @@
+const path = require("path");
+const open = require("open");
+
+app.use(express.static(path.join(__dirname, "frontend")));
+
+app.get("/api/status", (req, res) => {
+    res.json({ status: "online" });
+});
+
+app.listen(PORT, async () => {
+    const url = `http://localhost:${PORT}`;
+    console.log(`Troll backend running on ${url}`);
+    await open(url);
+});
+const path = require("path");
+const open = require("open");
+app.use(express.static(path.join(__dirname, "frontend")));
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "frontend", "index.html"));
+});
+
+require("dotenv").config();
+const express = require("express");
+const path = require("path");
+const searchRoute = require("./routes/search");
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "../public")));
+
+// Routes
+app.use("/api/search", searchRoute);
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+    res.json({
+        status: "TROLL Server Operational",
+        version: process.env.APP_VERSION,
+        timestamp: new Date()
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`TROLL Server running on port ${PORT}`);
+});
+const express = require("express");
+const router = express.Router();
+const searchEngine = require("../services/searchEngine");
+
+router.get("/", async (req, res) => {
+    const query = req.query.q;
+
+    if (!query) {
+        return res.json({ results: [] });
+    }
+    app.listen(PORT, async () => {
+    const url = `http://localhost:${PORT}`;
+    console.log(` Troll backend running on ${url}`);
+    
+    // Automatically open browser
+    await open(url);
+});
+
+    const results = await searchEngine.search(query);
+
+    res.json({
+        server: "TROLL AI Engine Active",
+        results
+    });
+});
+
+module.exports = router;
+class SearchEngine {
+
+    async search(query) {
+
+        // Future AI logic can go here
+        return [
+            {
+                title: "TROLL Adaptive Core",
+                description: `AI-enhanced result for "${query}"`,
+                link: "#"
+            },
+            {
+                title: "TROLL Neural Index",
+                description: `Technology-aware match for "${query}"`,
+                link: "#"
+            }
+        ];
+    }
+
+}
+
+module.exports = new SearchEngine();
+npm install nodemon --save-dev
+{
+  "name": "troll-server",
+  "version": "2.0.0",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "update-deps": "npm update"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}
+npm install -g npm-check-updates
+PORT=5000
+APP_VERSION=2.0.0
+npm install -g pm2
+module.exports = {
+  apps: [
+    {
+      name: "TROLL-SERVER",
+      script: "src/app.js",
+      watch: true,
+      autorestart: true,
+      max_memory_restart: "300M",
+      env: {
+        NODE_ENV: "production"
+      }
+    }
+  ]
+};
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup
